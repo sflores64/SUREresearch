@@ -1,2 +1,2 @@
 all: proj.cpp
-	g++ proj.cpp -Wall -oproj
+	g++ proj.cpp -lpthread -Wall -oproj
