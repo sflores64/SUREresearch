@@ -8,28 +8,57 @@
 #include <pthread.h>
 using namespace std;
 
-void busy();
+static volatile bool stop = false;
+int temp_change = 0;
+int temp = 0;
 
-int conv_temp(string i);
+void busy();
+int get_temp(int m);
+static void* userInput_thread(void*);
 
 int main()
 {
-	//spawn threads for the busy-wait function.
-	pthread_t threads[2];
+	printf("\nEnter amount of degrees to add to temp: ");
+	cin >> temp_change;
 
+	//spawn threads for the busy-wait function.
+	pthread_t tId;
+	(void) pthread_create(&tId, 0, userInput_thread, 0);
+
+	temp = get_temp(temp_change);
+	cout << "Initial temp: " << temp << endl;
+	// run busy function
+	busy();
+
+	(void) pthread_join(tId, NULL);
+
+	return 0;
+}
+
+void busy()
+{
+	float i = 1.383468272;
+	float j = 2.378364924;
+	//continously increment and multiply two numbers
+	printf("\nBusy function starting. Press 'q' to break busy loop and display temperature.\n");
+	while(stop == false)
+	{
+		j = i * j;
+		i++;
+		//temp = get_temp(temp_change);
+	//	cout << "Temp: " << temp << endl;
+	}
+		temp = get_temp(temp_change);
+	printf("\nProgram manually quit.\n");
+	cout << "Temp: " << temp << endl;
+	//write temp to tempbusy.txt
+}
+
+int get_temp(int m)
+{
 	// open temperature file, store in temp.txt
 	ifstream fin;
 	fin.open("../../../../sys/class/thermal/thermal_zone0/temp");
-	/*  debugging 
-	    if (fin.is_open())
-	    {
-	    printf("File opened successfully.\n");
-	    }
-	    else
-	    {
-	    printf("File wasn't opened.\n");
-	    }
-	    */
 	ofstream fout;
 	fout.open("temp.txt");
 	string line = "";
@@ -37,58 +66,24 @@ int main()
 	fout << line;
 	fin.close();
 	fout.close();
-
-	int temp = conv_temp(line);
-	cout << "temp: " << temp << endl;
-
-	// run busy function
-	busy();
-
-	return 0;
-}
-
-void busy()
-{
-	//run for set amount of time	
-	int count = 0;
-	float i = 1.383468272;
-	float j = 2.378364924;
-	//continously increment and add two numbers
-	printf("Busy function starting. Enter 'q' and then enter to break busy loop and display temperature.\n");
-	char input = 'p';
-	while (1)
-	{
-		j = i * j;
-		i++;
-		//cin >> input;
-		if (count == 10000000000)
-		{
-			ifstream fin;
-			fin.open("../../../../sys/class/thermal/thermal_zone0/temp");
-			ofstream fout;
-			fout.open("tempbusy.txt");
-			string line = "";
-			getline(fin, line);
-			fout << line;
-			fin.close();
-			fout.close();
-			int temp = conv_temp(line);
-			//cout << "temp: " << temp << endl;
-			count = 0;	//fstream 
-		}
-		count++;
-	}
-	printf("busy complete.\n");
-
-	return;
-	//write temp to tempbusy.txt
-}
-
-int conv_temp(string i)
-{
 	//convert temp string to an int, then get rid of decimals
-	int t = stoi(i);
+	int t = stoi(line);
 	t = t / 1000;
+	t = t + temp_change;
 
 	return t;
+}
+
+static void* userInput_thread(void*)
+{
+	system("stty raw"); //set terminal to raw mode so enter doesn't need to be pressed
+	while(stop == false)
+	{
+		if (getchar() == 'q')
+		{
+			stop = true;
+			system("stty raw");
+		}
+	}
+	return 0;
 }
