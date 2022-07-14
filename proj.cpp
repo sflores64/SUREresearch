@@ -61,7 +61,7 @@ void busy()
 		j = i * j;
 		i++;
 		//cin >> input;
-		if (count == 1000000000)
+		if (count == 10000000000)
 		{
 			ifstream fin;
 			fin.open("../../../../sys/class/thermal/thermal_zone0/temp");
@@ -73,7 +73,7 @@ void busy()
 			fin.close();
 			fout.close();
 			int temp = conv_temp(line);
-			cout << "temp: " << temp << endl;
+			//cout << "temp: " << temp << endl;
 			count = 0;	//fstream 
 		}
 		count++;
